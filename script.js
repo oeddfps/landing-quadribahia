@@ -10,12 +10,17 @@ window.addEventListener("load", () => {
 });
 
 const revealItems = [
-  ...document.querySelectorAll(".section .container, .steps-grid > div, .feature-grid article, .tour-grid a, .cta-box"),
+  ...document.querySelectorAll(".section .container, .steps-grid > div, .feature-grid article, .schedule-times span, .photo-grid figure, .cta-box"),
 ];
 
 revealItems.forEach((item, index) => {
   item.classList.add("reveal");
   item.style.setProperty("--delay", `${Math.min(index * 55, 360)}ms`);
+});
+
+document.querySelectorAll(".photo-grid figure").forEach((figure, index) => {
+  figure.classList.add("photo-reveal");
+  figure.style.setProperty("--photo-delay", `${index * 90}ms`);
 });
 
 const observer = new IntersectionObserver(
@@ -74,4 +79,55 @@ document.querySelectorAll("[data-tilt]").forEach((card) => {
   card.addEventListener("mouseleave", () => {
     card.style.transform = "";
   });
+});
+
+const lightbox = document.querySelector("#image-lightbox");
+const lightboxImage = lightbox?.querySelector("img");
+const lightboxClose = lightbox?.querySelector(".lightbox-close");
+let lastOpenedImage = null;
+
+function closeLightbox() {
+  if (!lightbox || !lightboxImage) return;
+
+  lightbox.hidden = true;
+  lightbox.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("lightbox-open");
+  lightboxImage.src = "";
+  lastOpenedImage?.focus();
+}
+
+function openLightbox(image) {
+  if (!lightbox || !lightboxImage) return;
+
+  lastOpenedImage = image.closest("figure");
+  lightboxImage.src = image.currentSrc || image.src;
+  lightboxImage.alt = image.alt;
+  lightbox.hidden = false;
+  lightbox.setAttribute("aria-hidden", "false");
+  document.body.classList.add("lightbox-open");
+  lightboxClose?.focus();
+}
+
+document.querySelectorAll(".photo-grid figure").forEach((figure) => {
+  const image = figure.querySelector("img");
+  if (!image) return;
+
+  figure.setAttribute("role", "button");
+  figure.setAttribute("tabindex", "0");
+  figure.setAttribute("aria-label", `Ampliar imagem: ${image.alt}`);
+  figure.addEventListener("click", () => openLightbox(image));
+  figure.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    openLightbox(image);
+  });
+});
+
+lightboxClose?.addEventListener("click", closeLightbox);
+lightbox?.addEventListener("click", (event) => {
+  if (event.target === lightbox) closeLightbox();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && lightbox && !lightbox.hidden) closeLightbox();
 });
